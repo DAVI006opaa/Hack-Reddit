@@ -1,0 +1,167 @@
+### Reddit Word Quest: A Word Game for Reddit Hackathon
+
+#### Game Overview
+**Type:** Word Game  
+**Description:** Reddit Word Quest is an engaging word guessing game where players interact through Reddit posts. Clues guide users to guess a hidden word. Players earn points for correct guesses, while incorrect guesses cost points. Compete with others in rounds to climb the leaderboard.
+
+---
+
+### Step 1: Setting Up Devvit (Reddit Developer Platform)
+1. **Install Devvit:** Follow the [Devvit Quickstart Guide](https://developers.reddit.com/quickstart) to set up your environment.
+2. **Create a Subreddit:** Set up a test subreddit for hosting and testing your game.
+3. **Interactive Posts:** Familiarize yourself with the [Interactive Posts Documentation](https://developers.reddit.com/docs).
+
+---
+
+### Step 2: Game Design
+**Key Features:**
+1. **Clues:** Each round begins with a set of clues for a hidden word.
+2. **Guessing Mechanism:** Players guess letters or the entire word via comments.
+3. **Scoring System:**
+   - Correct guess (letter): +10 points.
+   - Incorrect guess (letter): -5 points.
+   - Correct word guess: +50 points.
+   - Incorrect word guess: -20 points.
+4. **Rounds:** Games last for 5 rounds, with unique words each round.
+5. **Leaderboard:** Display top players for each game session.
+
+---
+
+### Step 3: Code Implementation
+
+#### **1. App Setup**
+```python
+import devvit
+from devvit.api import Reddit
+
+# Initialize Reddit API
+devvit.init_app("reddit_word_quest")
+```
+
+#### **2. Word Clue Logic**
+```python
+# Define words and clues
+WORDS_AND_CLUES = [
+    {"word": "Python", "clues": ["A programming language", "Named after a comedy group"]},
+    {"word": "Reddit", "clues": ["A popular online platform", "Known for its subreddits"]},
+    {"word": "Algorithm", "clues": ["Key in computer science", "A set of instructions"]},
+]
+
+# Select a random word and clues for the game
+import random
+def get_random_word():
+    return random.choice(WORDS_AND_CLUES)
+```
+
+#### **3. Player Interaction**
+```python
+# Game state tracking
+game_state = {
+    "current_word": "",
+    "revealed": [],
+    "scores": {}
+}
+
+def start_game():
+    word_clue = get_random_word()
+    game_state["current_word"] = word_clue["word"].upper()
+    game_state["revealed"] = ["_" for _ in word_clue["word"]]
+    return word_clue
+```
+
+#### **4. Scoring and Leaderboard**
+```python
+# Update scores
+def update_score(player, points):
+    if player not in game_state["scores"]:
+        game_state["scores"][player] = 0
+    game_state["scores"][player] += points
+
+# Generate leaderboard
+def generate_leaderboard():
+    return sorted(game_state["scores"].items(), key=lambda x: x[1], reverse=True)
+```
+
+#### **5. Handling Player Guesses**
+```python
+# Process guesses
+def process_guess(player, guess):
+    guess = guess.upper()
+    word = game_state["current_word"]
+
+    if len(guess) == 1:  # Letter guess
+        if guess in word:
+            for i, char in enumerate(word):
+                if char == guess:
+                    game_state["revealed"][i] = guess
+            update_score(player, 10)
+            return True, "Correct letter!"
+        else:
+            update_score(player, -5)
+            return False, "Incorrect letter."
+    elif guess == word:  # Word guess
+        game_state["revealed"] = list(word)
+        update_score(player, 50)
+        return True, "Correct word!"
+    else:
+        update_score(player, -20)
+        return False, "Incorrect word."
+```
+
+#### **6. Interactive Post Logic**
+```python
+@devvit.on_interactive_post
+def on_post_interaction(event):
+    player = event.user
+    guess = event.input  # Player input from the interactive post
+
+    success, message = process_guess(player, guess)
+    leaderboard = generate_leaderboard()
+
+    return {
+        "message": message,
+        "revealed_word": " ".join(game_state["revealed"]),
+        "leaderboard": leaderboard
+    }
+```
+
+---
+
+### Step 4: Submission Components
+**1. Video Walkthrough:**
+- Record a 1-minute video showcasing gameplay.
+
+**2. App Listing:**
+- Upload your app to the Devvit platform and generate a unique app link.
+
+**3. README.md:**
+```markdown
+# Reddit Word Quest
+
+## Overview
+Reddit Word Quest is an interactive word guessing game leveraging Reddit's Developer Platform. Players compete to guess hidden words based on clues, earning points and climbing the leaderboard.
+
+## How to Play
+1. Join the test subreddit.
+2. Interact with the game post to submit guesses.
+3. Earn points for correct guesses and compete with others.
+
+## Features
+- Clue-based word guessing.
+- Scoring and leaderboard system.
+- 5 rounds per game session.
+
+## Installation
+1. Clone this repository.
+2. Install Devvit and set up the app using the quickstart guide.
+3. Upload the app to your subreddit.
+
+## Contact
+For support, email devvit-support@reddit.com.
+```
+
+**4. Demo Post:**
+- Create a test subreddit and public post showcasing the game.
+
+**5. Public Repository:**
+- Publish your code to GitHub and grant access to Reddit's team.
